@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
+  baseURL: "https://finance-tracker-backend-production-9c35.up.railway.app",
 });
 
 // Automatically attach the token to every request if it exists
