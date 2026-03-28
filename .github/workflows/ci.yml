@@ -76,11 +76,13 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy backend
-        run: railway up --service finance-tracker-backend
+        run: railway up --service finance-tracker-backend --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
 
       - name: Deploy frontend
-        run: railway up --service finance-tracker-frontend
+        run: railway up --service finance-tracker-frontend --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
