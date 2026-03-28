@@ -1,3 +1,4 @@
+import uuid
 from fastapi.testclient import TestClient
 from app.main import app
 
@@ -9,9 +10,12 @@ def test_health_check():
     assert response.json() == {"status": "ok"}
 
 def test_register_and_login():
+    # Use a unique email every run so there's no conflict
+    unique_email = f"test_{uuid.uuid4().hex[:8]}@example.com"
+
     # Register a new user
     response = client.post("/auth/register", json={
-        "email": "test@example.com",
+        "email": unique_email,
         "password": "TestPass123",
         "full_name": "Test User"
     })
@@ -20,7 +24,7 @@ def test_register_and_login():
 
     # Login with the same user
     response = client.post("/auth/login", data={
-        "username": "test@example.com",
+        "username": unique_email,
         "password": "TestPass123"
     })
     assert response.status_code == 200
