@@ -30,6 +30,11 @@ export async function deleteTransaction(id) {
   await api.delete(`/transactions/${id}`);
 }
 
+export async function updateTransaction(id, data) {
+  const response = await api.put(`/transactions/${id}`, data);
+  return response.data;
+}
+
 // We'll also add a helper for categories
 export async function getCategories() {
   const response = await api.get("/categories");

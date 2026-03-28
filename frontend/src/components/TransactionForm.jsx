@@ -79,15 +79,32 @@ const dropStyles = {
   },
 };
 
-export default function TransactionForm({ isOpen, onClose, onSubmit }) {
-  const [formData, setFormData] = useState({
-    amount: "",
-    description: "",
-    type: "expense",
-    category: "Food",
-    date: new Date().toISOString().split("T")[0],
-  });
+const emptyForm = {
+  amount: "",
+  description: "",
+  type: "expense",
+  category: "Food",
+  date: new Date().toISOString().split("T")[0],
+};
+
+export default function TransactionForm({ isOpen, onClose, onSubmit, editingTransaction }) {
+  const [formData, setFormData] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+
+  // When editingTransaction changes, pre-fill the form
+  useEffect(() => {
+    if (editingTransaction) {
+      setFormData({
+        amount: editingTransaction.amount,
+        description: editingTransaction.description || "",
+        type: editingTransaction.type,
+        category: editingTransaction.category,
+        date: editingTransaction.date?.split("T")[0] || new Date().toISOString().split("T")[0],
+      });
+    } else {
+      setFormData(emptyForm);
+    }
+  }, [editingTransaction]);
 
   const categoryOptions = DEFAULT_CATEGORIES[formData.type];
 
@@ -95,7 +112,6 @@ export default function TransactionForm({ isOpen, onClose, onSubmit }) {
     const { name, value } = e.target;
     setFormData(prev => {
       const updated = { ...prev, [name]: value };
-      // Reset category when type changes
       if (name === "type") {
         updated.category = DEFAULT_CATEGORIES[value][0];
       }
@@ -106,26 +122,21 @@ export default function TransactionForm({ isOpen, onClose, onSubmit }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
-    await onSubmit(formData);
+    await onSubmit(formData, editingTransaction?.id);
     setLoading(false);
-    setFormData({
-      amount: "",
-      description: "",
-      type: "expense",
-      category: "Food",
-      date: new Date().toISOString().split("T")[0],
-    });
+    setFormData(emptyForm);
     onClose();
   }
 
   if (!isOpen) return null;
 
+  const isEditing = !!editingTransaction;
+
   return (
     <div style={styles.overlay}>
       <div style={styles.modal}>
-        <h2 style={styles.title}>Add Transaction</h2>
+        <h2 style={styles.title}>{isEditing ? "Edit Transaction" : "Add Transaction"}</h2>
         <form onSubmit={handleSubmit}>
-
           <div style={styles.field}>
             <label style={styles.label}>Type</label>
             <CustomSelect
@@ -152,38 +163,27 @@ export default function TransactionForm({ isOpen, onClose, onSubmit }) {
           <div style={styles.field}>
             <label style={styles.label}>Amount ($)</label>
             <input
-              type="number"
-              step="0.01"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              required
-              style={styles.input}
-              placeholder="0.00"
+              type="number" step="0.01" name="amount"
+              value={formData.amount} onChange={handleChange}
+              required style={styles.input} placeholder="0.00"
             />
           </div>
 
           <div style={styles.field}>
             <label style={styles.label}>Description</label>
             <input
-              type="text"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="e.g., Dinner with friends"
-              style={styles.input}
+              type="text" name="description"
+              value={formData.description} onChange={handleChange}
+              placeholder="e.g., Dinner with friends" style={styles.input}
             />
           </div>
 
           <div style={styles.field}>
             <label style={styles.label}>Date</label>
             <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              required
-              style={styles.input}
+              type="date" name="date"
+              value={formData.date} onChange={handleChange}
+              required style={styles.input}
             />
           </div>
 
@@ -192,10 +192,9 @@ export default function TransactionForm({ isOpen, onClose, onSubmit }) {
               Cancel
             </button>
             <button type="submit" disabled={loading} style={styles.submitButton}>
-              {loading ? "Adding..." : "Add Transaction"}
+              {loading ? "Saving..." : isEditing ? "Save Changes" : "Add Transaction"}
             </button>
           </div>
-
         </form>
       </div>
     </div>
@@ -207,71 +206,40 @@ const styles = {
     position: "fixed",
     top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: "rgba(0,0,0,0.75)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    display: "flex", alignItems: "center", justifyContent: "center",
     zIndex: 1000,
   },
   modal: {
     background: "#1a1a2e",
     border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: "20px",
-    padding: "32px",
-    width: "100%",
-    maxWidth: "450px",
+    borderRadius: "20px", padding: "32px",
+    width: "100%", maxWidth: "450px",
   },
   title: {
-    fontSize: "24px",
-    marginBottom: "24px",
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "700",
+    fontSize: "24px", marginBottom: "24px",
+    color: "#fff", textAlign: "center", fontWeight: "700",
   },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    marginBottom: "16px",
-  },
+  field: { display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" },
   label: {
-    fontSize: "13px",
-    color: "#888",
-    fontWeight: "500",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
+    fontSize: "13px", color: "#888", fontWeight: "500",
+    textTransform: "uppercase", letterSpacing: "0.05em",
   },
   input: {
-    padding: "11px 16px",
-    borderRadius: "10px",
+    padding: "11px 16px", borderRadius: "10px",
     border: "1px solid rgba(255,255,255,0.08)",
-    background: "#12122a",
-    color: "#f0f0f0",
-    fontSize: "15px",
-    outline: "none",
+    background: "#12122a", color: "#f0f0f0",
+    fontSize: "15px", outline: "none",
   },
-  buttonGroup: {
-    display: "flex",
-    gap: "12px",
-    justifyContent: "flex-end",
-    marginTop: "8px",
-  },
+  buttonGroup: { display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "8px" },
   cancelButton: {
-    padding: "12px 20px",
-    borderRadius: "10px",
+    padding: "12px 20px", borderRadius: "10px",
     border: "1px solid rgba(255,255,255,0.15)",
-    background: "transparent",
-    color: "#888",
-    fontSize: "14px",
-    cursor: "pointer",
+    background: "transparent", color: "#888",
+    fontSize: "14px", cursor: "pointer",
   },
   submitButton: {
-    padding: "12px 24px",
-    borderRadius: "10px",
-    border: "none",
+    padding: "12px 24px", borderRadius: "10px", border: "none",
     background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-    color: "#fff",
-    fontSize: "14px",
-    fontWeight: "600",
-    cursor: "pointer",
+    color: "#fff", fontSize: "14px", fontWeight: "600", cursor: "pointer",
   },
 };

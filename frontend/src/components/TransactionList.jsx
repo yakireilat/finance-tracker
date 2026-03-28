@@ -1,4 +1,4 @@
-export default function TransactionList({ transactions, onDelete }) {
+export default function TransactionList({ transactions, onDelete, onEdit }) {
   return (
     <div style={styles.container}>
       <h3 style={styles.header}>Transaction History</h3>
@@ -12,19 +12,28 @@ export default function TransactionList({ transactions, onDelete }) {
                 <p style={styles.description}>{t.description}</p>
                 <p style={styles.category}>{t.category} · {t.date?.split("T")[0]}</p>
               </div>
+
               <div style={styles.right}>
-                <p style={{ ...styles.amount, color: t.type === "expense" ? "#f87171" : "#34d399" }}>
-                  {t.type === "expense" ? "-" : "+"}${Math.abs(t.amount).toFixed(2)}
-                </p>
-                <button
+              <p style={{ ...styles.amount, color: t.type === "expense" ? "#f87171" : "#34d399" }}>
+                 {t.type === "expense" ? "-" : "+"}${Math.abs(t.amount).toFixed(2)}
+              </p>
+               <button
+                  onClick={() => onEdit(t)}
+                  style={styles.editButton}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(99,102,241,0.15)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+               ✎
+              </button>
+               <button
                   onClick={() => onDelete(t.id)}
                   style={styles.deleteButton}
                   onMouseEnter={e => e.currentTarget.style.background = "rgba(248,113,113,0.15)"}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                 >
-                  ✕
-                </button>
-              </div>
+                ✕
+              </button>
+             </div>
             </div>
           ))
         )}
@@ -68,4 +77,15 @@ const styles = {
     transition: "background 0.15s",
     lineHeight: 1,
   },
+  editButton: {
+   background: "transparent",
+    border: "none",
+    color: "#a78bfa",
+    fontSize: "16px",
+    cursor: "pointer",
+    padding: "4px 8px",
+    borderRadius: "6px",
+    transition: "background 0.15s",
+    lineHeight: 1,
+},
 };

@@ -31,6 +31,24 @@ def create_transaction(
     db.commit()
     db.refresh(transaction)
     return transaction
+    
+@router.put("/{transaction_id}", response_model=TransactionResponse)
+def update_transaction(
+    transaction_id: int,
+    transaction_in: TransactionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    transaction = db.query(Transaction)\
+                    .filter(Transaction.id == transaction_id,
+                            Transaction.user_id == current_user.id).first()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    for key, value in transaction_in.model_dump(exclude_unset=True).items():
+        setattr(transaction, key, value)
+    db.commit()
+    db.refresh(transaction)
+    return transaction
 
 @router.delete("/{transaction_id}")
 def delete_transaction(

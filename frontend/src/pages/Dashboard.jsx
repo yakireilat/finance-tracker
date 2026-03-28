@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../services/auth";
-import { getTransactions, createTransaction, deleteTransaction } from "../services/api";
+import { getTransactions, createTransaction, deleteTransaction, updateTransaction } from "../services/api";
 import TransactionForm from "../components/TransactionForm";
 import TransactionList from "../components/TransactionList";
 import CategoryChart from "../components/CategoryChart";
@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   // This effect runs once when the component mounts to fetch initial data
   useEffect(() => {
@@ -33,15 +34,24 @@ export default function Dashboard() {
     fetchTransactions();
   }, []);
 
-  async function handleAddTransaction(txData) {
-    try {
+  async function handleSubmitTransaction(txData, editingId) {
+  try {
+    if (editingId) {
+      const updated = await updateTransaction(editingId, txData);
+      setTransactions(prev => prev.map(t => t.id === editingId ? updated : t));
+    } else {
       const newTx = await createTransaction(txData);
-      setTransactions((prev) => [newTx, ...prev]); // Add new transaction to the top of the list
-    } catch (err) {
-      setError("Failed to add transaction.");
-      console.error(err);
+      setTransactions(prev => [newTx, ...prev]);
     }
+  } catch (err) {
+    setError("Failed to save transaction.");
   }
+}
+
+function handleEditTransaction(transaction) {
+  setEditingTransaction(transaction);
+  setIsFormOpen(true);
+}
 
   async function handleDeleteTransaction(id) {
   try {
@@ -79,11 +89,15 @@ export default function Dashboard() {
             <div style={styles.card}>
               <div style={styles.listHeader}>
                 <h3 style={styles.cardTitle}>All Transactions</h3>
-                <button onClick={() => setIsFormOpen(true)} style={styles.addButton}>
+                <button onClick={() => { setEditingTransaction(null); setIsFormOpen(true); }} style={styles.addButton}>
                   + Add Transaction
                 </button>
               </div>
-              <TransactionList transactions={transactions} onDelete={handleDeleteTransaction} />
+              <TransactionList
+                transactions={transactions}
+                onDelete={handleDeleteTransaction}
+                onEdit={handleEditTransaction}
+              />
             </div>
           </>
         )}
@@ -91,8 +105,9 @@ export default function Dashboard() {
 
       <TransactionForm
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSubmit={handleAddTransaction}
+        onClose={() => { setIsFormOpen(false); setEditingTransaction(null); }}
+        onSubmit={handleSubmitTransaction}
+        editingTransaction={editingTransaction}
       />
     </div>
   );
