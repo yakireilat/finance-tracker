@@ -55,23 +55,23 @@ export default function SummaryCards({ transactions }) {
 const styles = {
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
     gap: "16px",
     marginBottom: "24px",
   },
   card: {
     borderRadius: "14px",
-    padding: "20px 24px",
+    padding: "20px",
   },
   label: {
-    fontSize: "13px",
+    fontSize: "12px",
     color: "#888",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
     marginBottom: "10px",
   },
   value: {
-    fontSize: "26px",
+    fontSize: "clamp(18px, 4vw, 26px)",
     fontWeight: "700",
   },
 };
