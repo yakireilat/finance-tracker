@@ -1,3 +1,19 @@
+/* A fresh, modern dark theme with a vibrant accent color */
+
+/* 1. Define the new color palette */
+:root {
+  --bg-color: #0a0a0a;            /* Main page background - very dark black */
+  --card-bg: #16213e;             /* Card/modal background - dark blue */
+  --input-bg: #1c2331;            /* Input field background - slightly lighter blue */
+  --border-color: #1f4172;        /* Borders and outlines - a defined blue */
+  --text-primary: #f5f5f5;         /* Main text - clean white */
+  --text-secondary: #a8b2d1;       /* Secondary text - soft gray-blue */
+  --accent-color: #64ffda;        /* Buttons, links, highlights - vibrant teal */
+  --accent-hover: #4cdfd1;         /* Hover state for accent color */
+  --danger-color: #ff6b6b;         /* Error/delete actions - a soft red */
+}
+
+/* 2. Base and reset styles (from your original file) */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -6,11 +22,28 @@
 
 body {
   font-family: 'Inter', 'Segoe UI', sans-serif;
-  background: #0f0f1a;
-  color: #f0f0f0;
+  background-color: var(--bg-color); /* <-- Use the new variable */
+  color: var(--text-primary);        /* <-- Use the new variable */
   min-height: 100vh;
 }
 
 input, button {
   font-family: inherit;
+}
+
+select option {
+  background-color: #000000; /* Pure black for the dropdown list */
+  color: var(--text-primary);
+  padding: 10px;
+}
+
+/* Add a nice hover effect for the options */
+select option:hover {
+  background-color: var(--accent-color); /* The vibrant teal color on hover */
+  color: var(--bg-color); /* Dark text when hovered */
+}
+
+/* 4. Fix the date input calendar icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }
