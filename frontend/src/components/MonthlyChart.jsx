@@ -1,11 +1,12 @@
-import { Bar } from "react-chartjs-2";
 import { Chart, registerables } from "chart.js";
+import { Bar } from "react-chartjs-2";
 Chart.register(...registerables);
 
 function getLast6Months() {
   const months = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date();
+    d.setDate(1);
     d.setMonth(d.getMonth() - i);
     months.push({
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
@@ -20,13 +21,13 @@ export default function MonthlyChart({ transactions }) {
 
   const income = months.map(({ key }) =>
     transactions
-      .filter(t => t.type === "income" && t.date?.startsWith(key))
+      .filter(t => t.type === "income" && t.date?.slice(0, 7) === key)
       .reduce((sum, t) => sum + t.amount, 0)
   );
 
   const expenses = months.map(({ key }) =>
     transactions
-      .filter(t => t.type === "expense" && t.date?.startsWith(key))
+      .filter(t => t.type === "expense" && t.date?.slice(0, 7) === key)
       .reduce((sum, t) => sum + t.amount, 0)
   );
 
@@ -54,13 +55,16 @@ export default function MonthlyChart({ transactions }) {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: true,
+    aspectRatio: 3,
     plugins: {
       legend: {
         position: "top",
         labels: {
           color: "#f0f0f0",
-          padding: 20,
-          font: { size: 13 },
+          padding: 16,
+          font: { size: 12 },
+          boxWidth: 12,
         },
       },
       tooltip: {
@@ -71,16 +75,17 @@ export default function MonthlyChart({ transactions }) {
     },
     scales: {
       x: {
-        ticks: { color: "#888", font: { size: 12 } },
-        grid: { color: "rgba(255,255,255,0.05)" },
+        ticks: { color: "#888", font: { size: 11 } },
+        grid: { color: "rgba(255,255,255,0.04)" },
       },
       y: {
         ticks: {
           color: "#888",
-          font: { size: 12 },
+          font: { size: 11 },
           callback: val => `$${val}`,
+          maxTicksLimit: 5,
         },
-        grid: { color: "rgba(255,255,255,0.05)" },
+        grid: { color: "rgba(255,255,255,0.04)" },
       },
     },
   };
@@ -97,7 +102,7 @@ const styles = {
   card: {
     background: "rgba(255,255,255,0.03)",
     borderRadius: "16px",
-    padding: "24px",
+    padding: "20px 24px",
     border: "1px solid rgba(255,255,255,0.1)",
     marginBottom: "24px",
   },
