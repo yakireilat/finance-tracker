@@ -1,15 +1,8 @@
 import { Pie } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
-
-ChartJS.register(ArcElement, Tooltip, Legend);
+import { Chart, registerables } from "chart.js";
+Chart.register(...registerables);
 
 export default function CategoryChart({ transactions }) {
-  // Process transactions for the chart
   const expenseData = transactions
     .filter((t) => t.type === "expense")
     .reduce((acc, t) => {
@@ -56,9 +49,7 @@ export default function CategoryChart({ transactions }) {
         callbacks: {
           label: function (context) {
             let label = context.label || "";
-            if (label) {
-              label += ": ";
-            }
+            if (label) label += ": ";
             if (context.parsed !== null) {
               label += "$" + context.parsed.toFixed(2);
             }
@@ -93,7 +84,12 @@ const styles = {
     padding: "24px",
     border: "1px solid rgba(255,255,255,0.1)",
   },
-  header: { fontSize: "18px", fontWeight: "600", marginBottom: "16px", color: "#fff" },
+  header: {
+    fontSize: "18px",
+    fontWeight: "600",
+    marginBottom: "16px",
+    color: "#fff",
+  },
   emptyState: {
     textAlign: "center",
     color: "#888",
