@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { getTransactions, getBudgets } from "../services/api";
+import { getTransactions } from "../services/api";
 import Layout from "../components/Layout";
 import SummaryCards from "../components/SummaryCards";
 import CategoryChart from "../components/CategoryChart";
 import MonthlyChart from "../components/MonthlyChart";
+import FinancialInsights from "../components/FinancialInsights";
 import Card from "../components/Card";
 
 export default function Dashboard() {
@@ -57,6 +58,8 @@ export default function Dashboard() {
         {!loading && !error && (
           <>
             <SummaryCards transactions={transactions} />
+
+            <FinancialInsights transactions={transactions} />
 
             <div style={styles.chartsRow}>
               <div style={{ flex: 2, minWidth: 0 }}>

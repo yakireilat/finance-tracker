@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { Chart, registerables } from "chart.js";
 import { Bar } from "react-chartjs-2";
 Chart.register(...registerables);
 
-function getLast6Months() {
+function getMonths(count) {
   const months = [];
-  for (let i = 5; i >= 0; i--) {
+  for (let i = count - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(1);
     d.setMonth(d.getMonth() - i);
@@ -17,19 +18,20 @@ function getLast6Months() {
 }
 
 export default function MonthlyChart({ transactions }) {
-  const months = getLast6Months();
+  const [monthCount, setMonthCount] = useState(6);
+  const months = getMonths(monthCount);
 
   const income = months.map(({ key }) =>
-    transactions
-      .filter(t => t.type === "income" && t.date?.slice(0, 7) === key)
+    transactions.filter(t => t.type === "income" && t.date?.slice(0, 7) === key)
       .reduce((sum, t) => sum + t.amount, 0)
   );
 
   const expenses = months.map(({ key }) =>
-    transactions
-      .filter(t => t.type === "expense" && t.date?.slice(0, 7) === key)
+    transactions.filter(t => t.type === "expense" && t.date?.slice(0, 7) === key)
       .reduce((sum, t) => sum + t.amount, 0)
   );
+
+  const net = income.map((inc, i) => inc - expenses[i]);
 
   const data = {
     labels: months.map(m => m.label),
@@ -41,6 +43,8 @@ export default function MonthlyChart({ transactions }) {
         borderColor: "rgba(52,211,153,1)",
         borderWidth: 1,
         borderRadius: 6,
+        type: "bar",
+        order: 2,
       },
       {
         label: "Expenses",
@@ -49,6 +53,22 @@ export default function MonthlyChart({ transactions }) {
         borderColor: "rgba(248,113,113,1)",
         borderWidth: 1,
         borderRadius: 6,
+        type: "bar",
+        order: 2,
+      },
+      {
+        label: "Net",
+        data: net,
+        borderColor: "rgba(99,102,241,1)",
+        backgroundColor: "rgba(99,102,241,0.08)",
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: "rgba(99,102,241,1)",
+        pointBorderColor: "transparent",
+        type: "line",
+        tension: 0.4,
+        fill: true,
+        order: 1,
       },
     ],
   };
@@ -56,7 +76,7 @@ export default function MonthlyChart({ transactions }) {
   const options = {
     responsive: true,
     maintainAspectRatio: true,
-    aspectRatio: 3,
+    aspectRatio: 2.8,
     plugins: {
       legend: {
         position: "top",
@@ -71,6 +91,12 @@ export default function MonthlyChart({ transactions }) {
         callbacks: {
           label: ctx => `${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`,
         },
+        backgroundColor: "#1a1a1a",
+        borderColor: "rgba(255,255,255,0.06)",
+        borderWidth: 1,
+        titleColor: "#888",
+        bodyColor: "#f5f5f5",
+        padding: 10,
       },
     },
     scales: {
@@ -92,7 +118,20 @@ export default function MonthlyChart({ transactions }) {
 
   return (
     <div style={styles.card}>
-      <h3 style={styles.title}>Monthly Overview</h3>
+      <div style={styles.header}>
+        <h3 style={styles.title}>Monthly Overview</h3>
+        <div style={styles.toggleRow}>
+          {[6, 12].map(n => (
+            <button
+              key={n}
+              onClick={() => setMonthCount(n)}
+              style={{ ...styles.toggleBtn, ...(monthCount === n ? styles.toggleActive : {}) }}
+            >
+              {n}M
+            </button>
+          ))}
+        </div>
+      </div>
       <Bar data={data} options={options} />
     </div>
   );
@@ -106,10 +145,35 @@ const styles = {
     border: "1px solid rgba(255,255,255,0.1)",
     marginBottom: "24px",
   },
-  title: {
-    fontSize: "18px",
-    fontWeight: "600",
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: "16px",
+  },
+  title: {
+    fontSize: "16px",
+    fontWeight: "600",
     color: "#fff",
+  },
+  toggleRow: {
+    display: "flex",
+    gap: "6px",
+  },
+  toggleBtn: {
+    padding: "4px 12px",
+    borderRadius: "20px",
+    border: "1px solid var(--border)",
+    background: "transparent",
+    color: "var(--text-muted)",
+    fontSize: "12px",
+    fontWeight: "500",
+    cursor: "pointer",
+    transition: "all var(--transition)",
+  },
+  toggleActive: {
+    background: "var(--accent-glow)",
+    borderColor: "var(--accent)",
+    color: "var(--accent-light)",
   },
 };

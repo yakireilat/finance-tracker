@@ -56,3 +56,7 @@ export async function getCategories() {
   return response.data;
 }
 
+export async function getStats() {
+  const response = await api.get("/transactions/stats");
+  return response.data;
+}

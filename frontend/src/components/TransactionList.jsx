@@ -1,11 +1,16 @@
 import { useState, useMemo } from "react";
 import Card from "./Card";
 
+const PAGE_SIZE = 20;
+
 export default function TransactionList({ transactions, onDelete, onEdit }) {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [sortBy, setSortBy] = useState("date_desc");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
 
   const categories = useMemo(() =>
     ["all", ...new Set(transactions.map(t => t.category))],
@@ -25,6 +30,8 @@ export default function TransactionList({ transactions, onDelete, onEdit }) {
 
     if (filterType !== "all") result = result.filter(t => t.type === filterType);
     if (filterCategory !== "all") result = result.filter(t => t.category === filterCategory);
+    if (dateFrom) result = result.filter(t => t.date?.slice(0, 10) >= dateFrom);
+    if (dateTo) result = result.filter(t => t.date?.slice(0, 10) <= dateTo);
 
     switch (sortBy) {
       case "date_desc": result.sort((a, b) => new Date(b.date) - new Date(a.date)); break;
@@ -34,11 +41,18 @@ export default function TransactionList({ transactions, onDelete, onEdit }) {
     }
 
     return result;
-  }, [transactions, search, filterType, filterCategory, sortBy]);
+  }, [transactions, search, filterType, filterCategory, sortBy, dateFrom, dateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  function handleFilterChange(setter) {
+    return (e) => { setter(e.target.value); setPage(1); };
+  }
 
   return (
     <Card>
-      {/* Header */}
       <div style={styles.header}>
         <div>
           <h3 style={styles.title}>Transactions</h3>
@@ -46,7 +60,7 @@ export default function TransactionList({ transactions, onDelete, onEdit }) {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Primary filters */}
       <div style={styles.filters}>
         <div style={styles.searchWrapper}>
           <span style={styles.searchIcon}>⌕</span>
@@ -54,27 +68,27 @@ export default function TransactionList({ transactions, onDelete, onEdit }) {
             type="text"
             placeholder="Search transactions..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
             style={styles.searchInput}
           />
           {search && (
-            <button onClick={() => setSearch("")} style={styles.clearSearch}>✕</button>
+            <button onClick={() => { setSearch(""); setPage(1); }} style={styles.clearSearch}>✕</button>
           )}
         </div>
 
-        <select value={filterType} onChange={e => setFilterType(e.target.value)} style={styles.select}>
+        <select value={filterType} onChange={handleFilterChange(setFilterType)} style={styles.select}>
           <option value="all">All types</option>
           <option value="income">Income</option>
           <option value="expense">Expense</option>
         </select>
 
-        <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} style={styles.select}>
+        <select value={filterCategory} onChange={handleFilterChange(setFilterCategory)} style={styles.select}>
           {categories.map(c => (
             <option key={c} value={c}>{c === "all" ? "All categories" : c}</option>
           ))}
         </select>
 
-        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={styles.select}>
+        <select value={sortBy} onChange={handleFilterChange(setSortBy)} style={styles.select}>
           <option value="date_desc">Newest first</option>
           <option value="date_asc">Oldest first</option>
           <option value="amount_desc">Highest amount</option>
@@ -82,18 +96,48 @@ export default function TransactionList({ transactions, onDelete, onEdit }) {
         </select>
       </div>
 
+      {/* Date range filter */}
+      <div style={styles.dateRange}>
+        <span style={styles.dateLabel}>Date range:</span>
+        <div style={styles.dateInputWrapper}>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={e => { setDateFrom(e.target.value); setPage(1); }}
+            style={styles.dateInput}
+          />
+        </div>
+        <span style={styles.dateSep}>→</span>
+        <div style={styles.dateInputWrapper}>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={e => { setDateTo(e.target.value); setPage(1); }}
+            style={styles.dateInput}
+          />
+        </div>
+        {(dateFrom || dateTo) && (
+          <button
+            onClick={() => { setDateFrom(""); setDateTo(""); setPage(1); }}
+            style={styles.clearDate}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       {/* List */}
       <div style={styles.list}>
-        {filtered.length === 0 ? (
+        {paginated.length === 0 ? (
           <div style={styles.empty}>
             <p style={styles.emptyIcon}>◎</p>
             <p style={styles.emptyText}>No transactions found</p>
           </div>
         ) : (
-          filtered.map((t, i) => (
+          paginated.map((t, i) => (
             <div
               key={t.id}
-              style={{ ...styles.item, animationDelay: `${i * 0.03}s` }}
+              style={{ ...styles.item, animationDelay: `${i * 0.02}s` }}
               className="animate-fade"
             >
               <div style={styles.itemLeft}>
@@ -146,6 +190,32 @@ export default function TransactionList({ transactions, onDelete, onEdit }) {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={styles.pagination}>
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            style={{ ...styles.pageBtn, ...(currentPage === 1 ? styles.pageBtnDisabled : {}) }}
+          >
+            ← Prev
+          </button>
+          <div style={styles.pageInfo}>
+            <span style={styles.pageNum}>Page {currentPage} of {totalPages}</span>
+            <span style={styles.pageRange}>
+              {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </span>
+          </div>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            style={{ ...styles.pageBtn, ...(currentPage === totalPages ? styles.pageBtnDisabled : {}) }}
+          >
+            Next →
+          </button>
+        </div>
+      )}
     </Card>
   );
 }
@@ -162,7 +232,7 @@ const styles = {
   filters: {
     display: "flex",
     gap: "10px",
-    marginBottom: "20px",
+    marginBottom: "12px",
     flexWrap: "wrap",
   },
   searchWrapper: {
@@ -214,7 +284,45 @@ const styles = {
     backgroundPosition: "right 10px center",
     paddingRight: "30px",
   },
-  list: { maxHeight: "520px", overflowY: "auto" },
+  dateRange: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "20px",
+    flexWrap: "wrap",
+  },
+  dateLabel: {
+    fontSize: "12px",
+    color: "var(--text-muted)",
+    whiteSpace: "nowrap",
+  },
+  dateInputWrapper: {
+    position: "relative",
+  },
+  dateInput: {
+    padding: "7px 10px",
+    background: "var(--bg-input)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius)",
+    color: "var(--text-secondary)",
+    fontSize: "12px",
+    outline: "none",
+    colorScheme: "dark",
+  },
+  dateSep: {
+    color: "var(--text-muted)",
+    fontSize: "12px",
+  },
+  clearDate: {
+    padding: "6px 12px",
+    background: "transparent",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius)",
+    color: "var(--text-muted)",
+    fontSize: "12px",
+    cursor: "pointer",
+  },
+  list: {},
   empty: { textAlign: "center", padding: "48px 0" },
   emptyIcon: { fontSize: "32px", color: "var(--text-muted)", marginBottom: "8px" },
   emptyText: { color: "var(--text-muted)", fontSize: "14px" },
@@ -268,5 +376,43 @@ const styles = {
     padding: "4px 6px",
     borderRadius: "6px",
     transition: "color var(--transition)",
+  },
+  pagination: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: "20px",
+    paddingTop: "16px",
+    borderTop: "1px solid var(--border)",
+  },
+  pageBtn: {
+    padding: "7px 16px",
+    borderRadius: "var(--radius)",
+    border: "1px solid var(--border)",
+    background: "transparent",
+    color: "var(--text-secondary)",
+    fontSize: "13px",
+    fontWeight: "500",
+    cursor: "pointer",
+    transition: "all var(--transition)",
+  },
+  pageBtnDisabled: {
+    opacity: 0.3,
+    cursor: "not-allowed",
+  },
+  pageInfo: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "2px",
+  },
+  pageNum: {
+    fontSize: "13px",
+    color: "var(--text-primary)",
+    fontWeight: "500",
+  },
+  pageRange: {
+    fontSize: "11px",
+    color: "var(--text-muted)",
   },
 };
