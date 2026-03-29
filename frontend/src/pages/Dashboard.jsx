@@ -120,7 +120,7 @@ const styles = {
   backgroundColor: "#0f0f1a",
   color: "#f0f0f0",
   minHeight: "100vh",
-  maxWidth: "1200px",
+  maxWidth: "1600px",
   margin: "0 auto",
   },
   header: {
