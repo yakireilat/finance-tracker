@@ -11,3 +11,4 @@ class User(Base):
     full_name = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     transactions = relationship("Transaction", back_populates="owner")
+    budgets = relationship("Budget", back_populates="owner")
