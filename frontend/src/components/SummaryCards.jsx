@@ -55,7 +55,7 @@ export default function SummaryCards({ transactions }) {
 const styles = {
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gridTemplateColumns: "repeat(4, 1fr)",
     gap: "16px",
     marginBottom: "24px",
   },

@@ -115,13 +115,13 @@ function handleEditTransaction(transaction) {
 
 const styles = {
   page: {
-    padding: "24px",
-    fontFamily: "'Inter', sans-serif",
-    backgroundColor: "#0f0f1a",
-    color: "#f0f0f0",
-    minHeight: "100vh",
-    maxWidth: "1400px",
-    margin: "0 auto",
+  padding: "24px",
+  fontFamily: "'Inter', sans-serif",
+  backgroundColor: "#0f0f1a",
+  color: "#f0f0f0",
+  minHeight: "100vh",
+  maxWidth: "1200px",
+  margin: "0 auto",
   },
   header: {
     display: "flex",
