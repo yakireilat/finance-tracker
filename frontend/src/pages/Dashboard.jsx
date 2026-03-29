@@ -7,6 +7,7 @@ import TransactionList from "../components/TransactionList";
 import CategoryChart from "../components/CategoryChart";
 import SummaryCards from "../components/SummaryCards";
 import MonthlyChart from "../components/MonthlyChart";
+import ExportButton from "../components/ExportButton";
 
 
 export default function Dashboard() {
@@ -91,9 +92,12 @@ function handleEditTransaction(transaction) {
             <div style={styles.card}>
               <div style={styles.listHeader}>
                 <h3 style={styles.cardTitle}>All Transactions</h3>
-                <button onClick={() => { setEditingTransaction(null); setIsFormOpen(true); }} style={styles.addButton}>
-                  + Add Transaction
-                </button>
+                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                  <ExportButton transactions={transactions} />
+                  <button onClick={() => { setEditingTransaction(null); setIsFormOpen(true); }} style={styles.addButton}>
+                    + Add Transaction
+                  </button>
+                </div>
               </div>
               <TransactionList
                 transactions={transactions}
