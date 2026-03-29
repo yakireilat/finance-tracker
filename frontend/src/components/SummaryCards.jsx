@@ -1,3 +1,5 @@
+import Card from "./Card";
+
 export default function SummaryCards({ transactions }) {
   const totalIncome = transactions
     .filter(t => t.type === "income")
@@ -11,42 +13,60 @@ export default function SummaryCards({ transactions }) {
 
   const cards = [
     {
+      label: "Net Balance",
+      value: `${balance >= 0 ? "+" : ""}$${balance.toFixed(2)}`,
+      change: balance >= 0 ? "positive" : "negative",
+      color: balance >= 0 ? "var(--green)" : "var(--red)",
+      glow: balance >= 0 ? "rgba(52,211,153,0.08)" : "rgba(248,113,113,0.08)",
+      icon: "◈",
+      sub: "All time",
+    },
+    {
       label: "Total Income",
       value: `+$${totalIncome.toFixed(2)}`,
-      color: "#34d399",
-      bg: "rgba(52,211,153,0.08)",
-      border: "rgba(52,211,153,0.2)",
+      color: "var(--green)",
+      glow: "rgba(52,211,153,0.06)",
+      icon: "↑",
+      sub: `${transactions.filter(t => t.type === "income").length} transactions`,
     },
     {
       label: "Total Expenses",
       value: `-$${totalExpenses.toFixed(2)}`,
-      color: "#f87171",
-      bg: "rgba(248,113,113,0.08)",
-      border: "rgba(248,113,113,0.2)",
-    },
-    {
-      label: "Net Balance",
-      value: `${balance >= 0 ? "+" : ""}$${balance.toFixed(2)}`,
-      color: balance >= 0 ? "#34d399" : "#f87171",
-      bg: balance >= 0 ? "rgba(52,211,153,0.08)" : "rgba(248,113,113,0.08)",
-      border: balance >= 0 ? "rgba(52,211,153,0.2)" : "rgba(248,113,113,0.2)",
+      color: "var(--red)",
+      glow: "rgba(248,113,113,0.06)",
+      icon: "↓",
+      sub: `${transactions.filter(t => t.type === "expense").length} transactions`,
     },
     {
       label: "Transactions",
       value: transactions.length,
-      color: "#a78bfa",
-      bg: "rgba(167,139,250,0.08)",
-      border: "rgba(167,139,250,0.2)",
+      color: "var(--accent-light)",
+      glow: "rgba(99,102,241,0.06)",
+      icon: "≡",
+      sub: "Total recorded",
     },
   ];
 
   return (
     <div style={styles.grid}>
-      {cards.map(card => (
-        <div key={card.label} style={{ ...styles.card, background: card.bg, border: `1px solid ${card.border}` }}>
-          <p style={styles.label}>{card.label}</p>
+      {cards.map((card, i) => (
+        <Card key={card.label} style={{ animationDelay: `${i * 0.05}s` }}>
+          <div style={styles.cardTop}>
+            <span style={styles.label}>{card.label}</span>
+            <span style={{ ...styles.icon, color: card.color, background: card.glow }}>
+              {card.icon}
+            </span>
+          </div>
           <p style={{ ...styles.value, color: card.color }}>{card.value}</p>
-        </div>
+          <p style={styles.sub}>{card.sub}</p>
+          {/* Bottom gradient line */}
+          <div style={{
+            position: "absolute",
+            bottom: 0, left: 0, right: 0,
+            height: "2px",
+            background: `linear-gradient(90deg, transparent, ${card.color}33, transparent)`,
+          }} />
+        </Card>
       ))}
     </div>
   );
@@ -55,23 +75,41 @@ export default function SummaryCards({ transactions }) {
 const styles = {
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
+    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
     gap: "16px",
     marginBottom: "24px",
   },
-  card: {
-    borderRadius: "14px",
-    padding: "20px",
+  cardTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "12px",
   },
   label: {
     fontSize: "12px",
-    color: "#888",
+    color: "var(--text-secondary)",
     textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    marginBottom: "10px",
+    letterSpacing: "0.08em",
+    fontWeight: "500",
+  },
+  icon: {
+    width: "28px",
+    height: "28px",
+    borderRadius: "8px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "13px",
+    fontWeight: "700",
   },
   value: {
-    fontSize: "clamp(18px, 4vw, 26px)",
+    fontSize: "28px",
     fontWeight: "700",
+    letterSpacing: "-0.02em",
+    marginBottom: "4px",
+  },
+  sub: {
+    fontSize: "11px",
+    color: "var(--text-muted)",
   },
 };

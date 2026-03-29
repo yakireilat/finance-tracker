@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { logout } from "../services/auth";
 import {
   getTransactions, createTransaction, deleteTransaction,
   updateTransaction, getBudgets
 } from "../services/api";
+import Layout from "../components/Layout";
 import TransactionForm from "../components/TransactionForm";
 import TransactionList from "../components/TransactionList";
 import CategoryChart from "../components/CategoryChart";
@@ -12,9 +11,9 @@ import MonthlyChart from "../components/MonthlyChart";
 import SummaryCards from "../components/SummaryCards";
 import ExportButton from "../components/ExportButton";
 import BudgetManager from "../components/BudgetManager";
+import Card from "../components/Card";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +33,7 @@ export default function Dashboard() {
         setBudgets(budgetData);
         setError(null);
       } catch (err) {
-        setError("Failed to fetch data. Is the backend running?");
+        setError("Failed to fetch data.");
         console.error(err);
       } finally {
         setLoading(false);
@@ -76,31 +75,53 @@ export default function Dashboard() {
     setIsFormOpen(true);
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   return (
-    <div style={styles.page}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>Finance Tracker</h1>
-        <button onClick={handleLogout} style={styles.logoutButton}>
-          Log Out
-        </button>
-      </header>
+    <Layout>
+      <div style={styles.page}>
+        {/* Page header */}
+        <div style={styles.pageHeader}>
+          <div>
+            <h1 style={styles.pageTitle}>Dashboard</h1>
+            <p style={styles.pageSubtitle}>
+              {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+            </p>
+          </div>
+          <div style={styles.headerActions}>
+            <ExportButton transactions={transactions} />
+            <button
+              onClick={() => { setEditingTransaction(null); setIsFormOpen(true); }}
+              style={styles.addButton}
+            >
+              + Add Transaction
+            </button>
+          </div>
+        </div>
 
-      <main style={styles.main}>
-        {loading && <p style={styles.message}>Loading your data...</p>}
-        {error && <p style={styles.message}>{error}</p>}
+        {loading && (
+          <div style={styles.loadingGrid}>
+            {[1,2,3,4].map(i => (
+              <div key={i} style={styles.skeleton} />
+            ))}
+          </div>
+        )}
+
+        {error && (
+          <Card style={{ borderColor: "rgba(248,113,113,0.2)", marginBottom: "24px" }}>
+            <p style={{ color: "var(--red)", fontSize: "14px" }}>⚠ {error}</p>
+          </Card>
+        )}
+
         {!loading && !error && (
           <>
             <SummaryCards transactions={transactions} />
 
-            <MonthlyChart transactions={transactions} />
-
-            <div style={{ marginBottom: "24px" }}>
-              <CategoryChart transactions={transactions} />
+            <div style={styles.chartsRow}>
+              <div style={{ flex: 2 }}>
+                <MonthlyChart transactions={transactions} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <CategoryChart transactions={transactions} />
+              </div>
             </div>
 
             <BudgetManager
@@ -109,28 +130,14 @@ export default function Dashboard() {
               onBudgetsChange={refreshBudgets}
             />
 
-            <div style={styles.card}>
-              <div style={styles.listHeader}>
-                <h3 style={styles.cardTitle}>All Transactions</h3>
-                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                  <ExportButton transactions={transactions} />
-                  <button
-                    onClick={() => { setEditingTransaction(null); setIsFormOpen(true); }}
-                    style={styles.addButton}
-                  >
-                    + Add Transaction
-                  </button>
-                </div>
-              </div>
-              <TransactionList
-                transactions={transactions}
-                onDelete={handleDeleteTransaction}
-                onEdit={handleEditTransaction}
-              />
-            </div>
+            <TransactionList
+              transactions={transactions}
+              onDelete={handleDeleteTransaction}
+              onEdit={handleEditTransaction}
+            />
           </>
         )}
-      </main>
+      </div>
 
       <TransactionForm
         isOpen={isFormOpen}
@@ -138,52 +145,57 @@ export default function Dashboard() {
         onSubmit={handleSubmitTransaction}
         editingTransaction={editingTransaction}
       />
-    </div>
+    </Layout>
   );
 }
 
 const styles = {
-  page: {
-    padding: "24px",
-    fontFamily: "'Inter', sans-serif",
-    backgroundColor: "#0f0f1a",
-    color: "#f0f0f0",
-    minHeight: "100vh",
-    maxWidth: "1600px",
-    margin: "0 auto",
+  page: { animation: "fadeIn 0.3s ease" },
+  pageHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "32px",
+    flexWrap: "wrap",
+    gap: "16px",
   },
-  header: {
-    display: "flex", justifyContent: "space-between",
-    alignItems: "center", marginBottom: "32px",
-    flexWrap: "wrap", gap: "12px",
+  pageTitle: {
+    fontSize: "28px",
+    fontWeight: "700",
+    letterSpacing: "-0.02em",
+    marginBottom: "4px",
   },
-  title: { fontSize: "clamp(20px, 5vw, 32px)", fontWeight: "700" },
-  logoutButton: {
-    padding: "10px 20px", borderRadius: "10px",
-    border: "1px solid rgba(255,255,255,0.2)",
-    background: "transparent", color: "#aaa",
-    cursor: "pointer", fontSize: "14px", whiteSpace: "nowrap",
-  },
-  main: {},
-  card: {
-    background: "rgba(255,255,255,0.03)",
-    borderRadius: "16px", padding: "24px",
-    border: "1px solid rgba(255,255,255,0.1)",
-  },
-  cardTitle: { fontSize: "18px", fontWeight: "600", marginBottom: "16px", color: "#fff" },
-  listHeader: {
-    display: "flex", justifyContent: "space-between",
-    alignItems: "center", marginBottom: "16px",
-    flexWrap: "wrap", gap: "12px",
-  },
+  pageSubtitle: { color: "var(--text-secondary)", fontSize: "13px" },
+  headerActions: { display: "flex", gap: "12px", alignItems: "center" },
   addButton: {
-    padding: "10px 16px", borderRadius: "8px", border: "none",
+    padding: "10px 20px",
+    borderRadius: "var(--radius)",
+    border: "none",
     background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-    color: "#fff", fontSize: "14px", fontWeight: "600",
-    cursor: "pointer", whiteSpace: "nowrap",
+    color: "#fff",
+    fontSize: "13px",
+    fontWeight: "600",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    transition: "opacity var(--transition)",
   },
-  message: {
-    textAlign: "center", fontSize: "16px",
-    color: "#888", padding: "20px 0",
+  chartsRow: {
+    display: "flex",
+    gap: "20px",
+    marginBottom: "24px",
+    flexWrap: "wrap",
+  },
+  loadingGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "16px",
+    marginBottom: "24px",
+  },
+  skeleton: {
+    height: "100px",
+    borderRadius: "var(--radius-lg)",
+    background: "linear-gradient(90deg, var(--bg-card) 25%, var(--bg-elevated) 50%, var(--bg-card) 75%)",
+    backgroundSize: "200% 100%",
+    animation: "shimmer 1.5s infinite",
   },
 };

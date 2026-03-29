@@ -10,6 +10,7 @@ from app.services.auth import (
 )
 from jose import JWTError, jwt
 from app.config import settings
+from app.schemas.user import UserCreate, UserResponse, Token, UserUpdate
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -48,3 +49,20 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     token = create_access_token({"sub": user.email})
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.put("/me", response_model=UserResponse)
+def update_me(
+    update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if update.full_name is not None:
+        current_user.full_name = update.full_name
+    db.commit()
+    db.refresh(current_user)
+    return current_user
