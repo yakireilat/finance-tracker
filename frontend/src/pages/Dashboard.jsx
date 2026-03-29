@@ -6,6 +6,7 @@ import TransactionForm from "../components/TransactionForm";
 import TransactionList from "../components/TransactionList";
 import CategoryChart from "../components/CategoryChart";
 import SummaryCards from "../components/SummaryCards";
+import MonthlyChart from "../components/MonthlyChart";
 
 
 export default function Dashboard() {
@@ -86,6 +87,7 @@ function handleEditTransaction(transaction) {
             <div style={{ marginBottom: "24px" }}>
              <CategoryChart transactions={transactions} />
             </div>
+            <MonthlyChart transactions={transactions} />
             <div style={styles.card}>
               <div style={styles.listHeader}>
                 <h3 style={styles.cardTitle}>All Transactions</h3>
