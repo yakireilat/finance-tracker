@@ -1,40 +1,25 @@
 import { useState, useEffect } from "react";
-import {
-  getTransactions, createTransaction, deleteTransaction,
-  updateTransaction, getBudgets
-} from "../services/api";
+import { getTransactions, getBudgets } from "../services/api";
 import Layout from "../components/Layout";
-import TransactionForm from "../components/TransactionForm";
-import TransactionList from "../components/TransactionList";
+import SummaryCards from "../components/SummaryCards";
 import CategoryChart from "../components/CategoryChart";
 import MonthlyChart from "../components/MonthlyChart";
-import SummaryCards from "../components/SummaryCards";
-import ExportButton from "../components/ExportButton";
-import BudgetManager from "../components/BudgetManager";
 import Card from "../components/Card";
 
 export default function Dashboard() {
   const [transactions, setTransactions] = useState([]);
-  const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
-        const [txData, budgetData] = await Promise.all([
-          getTransactions(),
-          getBudgets(),
-        ]);
+        const txData = await getTransactions();
         setTransactions(txData);
-        setBudgets(budgetData);
         setError(null);
       } catch (err) {
         setError("Failed to fetch data.");
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -42,66 +27,24 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  async function refreshBudgets() {
-    const budgetData = await getBudgets();
-    setBudgets(budgetData);
-  }
-
-  async function handleSubmitTransaction(txData, editingId) {
-    try {
-      if (editingId) {
-        const updated = await updateTransaction(editingId, txData);
-        setTransactions(prev => prev.map(t => t.id === editingId ? updated : t));
-      } else {
-        const newTx = await createTransaction(txData);
-        setTransactions(prev => [newTx, ...prev]);
-      }
-    } catch (err) {
-      setError("Failed to save transaction.");
-    }
-  }
-
-  async function handleDeleteTransaction(id) {
-    try {
-      await deleteTransaction(id);
-      setTransactions(prev => prev.filter(t => t.id !== id));
-    } catch (err) {
-      setError("Failed to delete transaction.");
-    }
-  }
-
-  function handleEditTransaction(transaction) {
-    setEditingTransaction(transaction);
-    setIsFormOpen(true);
-  }
-
   return (
     <Layout>
       <div style={styles.page}>
-        {/* Page header */}
         <div style={styles.pageHeader}>
           <div>
             <h1 style={styles.pageTitle}>Dashboard</h1>
             <p style={styles.pageSubtitle}>
-              {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long", year: "numeric",
+                month: "long", day: "numeric"
+              })}
             </p>
-          </div>
-          <div style={styles.headerActions}>
-            <ExportButton transactions={transactions} />
-            <button
-              onClick={() => { setEditingTransaction(null); setIsFormOpen(true); }}
-              style={styles.addButton}
-            >
-              + Add Transaction
-            </button>
           </div>
         </div>
 
         {loading && (
-          <div style={styles.loadingGrid}>
-            {[1,2,3,4].map(i => (
-              <div key={i} style={styles.skeleton} />
-            ))}
+          <div style={styles.skeletonGrid}>
+            {[1,2,3,4].map(i => <div key={i} style={styles.skeleton} />)}
           </div>
         )}
 
@@ -116,35 +59,54 @@ export default function Dashboard() {
             <SummaryCards transactions={transactions} />
 
             <div style={styles.chartsRow}>
-              <div style={{ flex: 2 }}>
+              <div style={{ flex: 2, minWidth: 0 }}>
                 <MonthlyChart transactions={transactions} />
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: "260px" }}>
                 <CategoryChart transactions={transactions} />
               </div>
             </div>
 
-            <BudgetManager
-              budgets={budgets}
-              transactions={transactions}
-              onBudgetsChange={refreshBudgets}
-            />
-
-            <TransactionList
-              transactions={transactions}
-              onDelete={handleDeleteTransaction}
-              onEdit={handleEditTransaction}
-            />
+            {/* Recent transactions preview */}
+            <Card>
+              <div style={styles.recentHeader}>
+                <p style={styles.recentTitle}>Recent Activity</p>
+                <a href="/transactions" style={styles.viewAll}>View all →</a>
+              </div>
+              {transactions.slice(0, 5).map(t => (
+                <div key={t.id} style={styles.recentItem}>
+                  <div style={{
+                    ...styles.recentDot,
+                    background: t.type === "expense"
+                      ? "rgba(248,113,113,0.12)"
+                      : "rgba(52,211,153,0.12)",
+                  }}>
+                    <span style={{ color: t.type === "expense" ? "var(--red)" : "var(--green)", fontSize: "11px", fontWeight: "700" }}>
+                      {t.type === "expense" ? "↓" : "↑"}
+                    </span>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={styles.recentDesc}>{t.description || t.category}</p>
+                    <p style={styles.recentMeta}>{t.category} · {t.date?.split("T")[0]}</p>
+                  </div>
+                  <span style={{
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: t.type === "expense" ? "var(--red)" : "var(--green)",
+                  }}>
+                    {t.type === "expense" ? "-" : "+"}${t.amount.toFixed(2)}
+                  </span>
+                </div>
+              ))}
+              {transactions.length === 0 && (
+                <p style={{ color: "var(--text-muted)", fontSize: "13px", textAlign: "center", padding: "24px 0" }}>
+                  No transactions yet
+                </p>
+              )}
+            </Card>
           </>
         )}
       </div>
-
-      <TransactionForm
-        isOpen={isFormOpen}
-        onClose={() => { setIsFormOpen(false); setEditingTransaction(null); }}
-        onSubmit={handleSubmitTransaction}
-        editingTransaction={editingTransaction}
-      />
     </Layout>
   );
 }
@@ -166,26 +128,14 @@ const styles = {
     marginBottom: "4px",
   },
   pageSubtitle: { color: "var(--text-secondary)", fontSize: "13px" },
-  headerActions: { display: "flex", gap: "12px", alignItems: "center" },
-  addButton: {
-    padding: "10px 20px",
-    borderRadius: "var(--radius)",
-    border: "none",
-    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-    color: "#fff",
-    fontSize: "13px",
-    fontWeight: "600",
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-    transition: "opacity var(--transition)",
-  },
   chartsRow: {
     display: "flex",
     gap: "20px",
     marginBottom: "24px",
     flexWrap: "wrap",
+    alignItems: "stretch",
   },
-  loadingGrid: {
+  skeletonGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
     gap: "16px",
@@ -198,4 +148,40 @@ const styles = {
     backgroundSize: "200% 100%",
     animation: "shimmer 1.5s infinite",
   },
+  recentHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "16px",
+  },
+  recentTitle: {
+    fontSize: "13px",
+    fontWeight: "500",
+    color: "var(--text-secondary)",
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+  },
+  viewAll: {
+    fontSize: "12px",
+    color: "var(--accent-light)",
+    textDecoration: "none",
+    fontWeight: "500",
+  },
+  recentItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    padding: "10px 0",
+    borderBottom: "1px solid var(--border)",
+  },
+  recentDot: {
+    width: "30px", height: "30px",
+    borderRadius: "8px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  recentDesc: { fontSize: "13px", color: "var(--text-primary)", fontWeight: "500", marginBottom: "2px" },
+  recentMeta: { fontSize: "11px", color: "var(--text-muted)" },
 };
